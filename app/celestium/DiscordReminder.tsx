@@ -32,7 +32,7 @@ export default function DiscordBannerCelestium() {
                     <a href="https://discord.gg/MF2m9DE8s">
                     <div className="flex items-center justify-center gap-6 bg-purple-700 px-6 py-3 rounded-md font-sans cursor-pointer hover:bg-purple-700 transition-all duration-300 hover:scale-105">
                         <img src="/Discord.png" alt="" className="h-9 w-9 invert" />
-                        <a className="font-bold whitespace-nowrap">Entrar no Discord</a>
+                        <span className="font-bold whitespace-nowrap">Entrar no Discord</span>
                         <img src="/seta-direita.png" alt="" className="h-3 w-3 invert" />
                     </div>
                     </a>

@@ -14,7 +14,6 @@ export default function GameModesCelestium() {
             <div className="flex flex-col justify-center items-center w-full">
                 <div className="text-purple-400 font-bold text-xs">{"// NOSSOS MODOS DE JOGO"}</div>
             </div>
-
             <div className="grid grid-cols-4 gap-10 py-16 w-full px-40">
 
                 {/* SURVIVAL COR É EMERALD-500*/}
@@ -29,7 +28,7 @@ export default function GameModesCelestium() {
                             <img src="/sinal-de-seta-para-baixo-para-navegar.png" alt="seta" className={`h-4 w-4 invert transition-transform duration-300 ${aberto === "survival" ? "rotate-180" : ""}`} />
                         </div>
                     </button>
-
+                    
                     {/* TELA ABERTA COR É EMERALD-500 */}
                     <div className={`overflow-hidden transition-all duration-500 ease-in-out border-b-2 border-b-emerald-500 rounded-xl ${aberto === "survival" ? "max-h-96 opacity-100 mt-2" : "max-h-0 opacity-0"}`}>
                         <div className="bg-[#140b2b] rounded-xl p-4 text-sm text-gray-300 flex flex-col gap-2">

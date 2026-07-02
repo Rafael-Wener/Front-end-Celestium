@@ -18,7 +18,7 @@ export default function LoginPage() {
     }
 
     try {
-      const res = await fetch("http://10.200.80.81:3005/auth/login", {
+      const res = await fetch("http://10.200.80.75:3005/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -33,13 +33,15 @@ export default function LoginPage() {
         localStorage.setItem("userId", data.user.id);
         localStorage.setItem("nickname", data.user.nickname);
 
+        window.dispatchEvent(new Event("userChanged"));
+
         setTimeout(() => {
           router.push("/celestium");
         }, 900);
       } else {
         setErro(data.message || "Usuário ou senha incorretos!");
       }
-    } catch (error) {
+    } catch {
       setErro("Erro ao conectar com o servidor!");
     }
   }
