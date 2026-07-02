@@ -47,7 +47,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full bg-[#080011] text-white overflow-hidden relative">
       <div className="absolute inset-0 bg-[url('/bg-server.png')] bg-cover bg-center opacity-70"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-purple-950/40 to-black/80"></div>
+      <div className="absolute inset-0 bg-linear-to-r from-black/80 via-purple-950/40 to-black/80"></div>
 
       <div className="relative z-10 min-h-screen grid grid-cols-1 lg:grid-cols-2">
         {/* Lado esquerdo */}
