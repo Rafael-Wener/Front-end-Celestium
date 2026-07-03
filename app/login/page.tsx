@@ -18,7 +18,7 @@ export default function LoginPage() {
     }
 
     try {
-      const res = await fetch("http://10.200.80.75:3005/auth/login", {
+      const res = await fetch("http://10.200.80.146:3005/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
