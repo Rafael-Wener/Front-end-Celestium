@@ -22,6 +22,55 @@ export default function TabelaDeVendas() {
     return await res.json();
   }
 
+  //FUNCÇÃO PARA FAZER O FINALIZAR A COMPRA FUNCIONAR
+  async function finalizarCompra() {
+    if (carrinho.length === 0) {
+      alert("Seu carrinho está vazio.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
+    if (!token || !userId) {
+      alert("Faça login para finalizar a compra.");
+      return;
+    }
+
+    const pedido = {
+      userId,
+      items: carrinho.map((item) => ({
+        productId: item.produto.id,
+        name: item.produto.name,
+        price: item.produto.price,
+        quantity: item.quantidade,
+      })),
+    };
+
+    try {
+      const res = await fetch("http://10.200.80.146:3005/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(pedido),
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao finalizar pedido");
+      }
+
+      alert("Compra realizada com sucesso!");
+
+      setCarrinho([]);
+      localStorage.removeItem("carrinho");
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao enviar pedido.");
+    }
+  }
+
   // TS BURRO NAO SABE LER JSON E PRECISA SER DEFINIDO
   type Produto = {
     id: string;
@@ -46,6 +95,7 @@ export default function TabelaDeVendas() {
   const [carregando, setCarregando] = useState(true);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
 
+
   // REDUCER PARA + E - NO CARRINHO
   const total = carrinho.reduce((soma, item) => {
     return soma + item.produto.price * item.quantidade;
@@ -57,6 +107,34 @@ export default function TabelaDeVendas() {
     : produtos.filter(
       (produto) => produto.categoryId === categoriaSelecionada
     );
+
+  // LAYER QUE MSOTRA QUANTIDADE DE PRODUTOS
+  const quantidadeItens = carrinho.reduce((total, item) => {
+    return total + item.quantidade;
+  }, 0);
+
+  // PARA SALVAR O REGISTRO E HISTORICO DE COMPRAS, APENAS VISUAL NEH CARA
+  useEffect(() => {
+    const carrinhoSalvo = localStorage.getItem("carrinho");
+
+    if (carrinhoSalvo) {
+      setCarrinho(JSON.parse(carrinhoSalvo));
+    }
+
+    async function load() {
+      try {
+        const data = await BuscarProdutos();
+        setProdutos(data);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    load();
+  }, []);
+
 
   // BUSCA OS PRODUTOS NO BANCO DE DADOS E RETORNA
   useEffect(() => {
@@ -75,6 +153,11 @@ export default function TabelaDeVendas() {
     }
     load();
   }, []);
+
+  // PARA CONTINUAR OS PROUTOS NO SERVIDOR DO CABECINHA
+  useEffect(() => {
+    localStorage.setItem("carrinho", JSON.stringify(carrinho));
+  }, [carrinho]);
 
   // TELA DE LOADING BEM MERDA
   if (carregando) {
@@ -123,7 +206,6 @@ export default function TabelaDeVendas() {
     );
   }
 
-
   // CSS E TELA EM SI
   return (
     <div className="w-full bg-white px-6 py-16 text-[#140b2b] md:px-12 xl:px-40">
@@ -146,7 +228,7 @@ export default function TabelaDeVendas() {
 
         <div className="flex items-center gap-3 rounded-md border border-purple-100 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-900">
           <img src="/cesta-de-compras.png" alt="" className="h-5 w-5" />
-          0 item(ns) no carrinho
+          {quantidadeItens} item(ns) no carrinho
         </div>
       </div>
 
@@ -326,7 +408,8 @@ export default function TabelaDeVendas() {
                   <span className="text-purple-300">R$ {total.toFixed(2)}</span>
                 </div>
 
-                <button className="mt-5 w-full rounded-md bg-purple-700 py-3 font-bold text-white hover:bg-purple-600 cursor-pointer">
+                <button className="mt-5 w-full rounded-md bg-purple-700 py-3 font-bold text-white hover:bg-purple-600 cursor-pointer"
+                  onClick={finalizarCompra}>
                   Finalizar compra
                 </button>
 
