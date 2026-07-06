@@ -24,52 +24,48 @@ export default function TabelaDeVendas() {
 
   //FUNCÇÃO PARA FAZER O FINALIZAR A COMPRA FUNCIONAR
   async function finalizarCompra() {
-    if (carrinho.length === 0) {
-      alert("Seu carrinho está vazio.");
-      return;
-    }
-
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
-
-    if (!token || !userId) {
-      alert("Faça login para finalizar a compra.");
-      return;
-    }
-
-    const pedido = {
-      userId,
-      items: carrinho.map((item) => ({
-        productId: item.produto.id,
-        name: item.produto.name,
-        price: item.produto.price,
-        quantity: item.quantidade,
-      })),
-    };
-
-    try {
-      const res = await fetch("http://10.200.80.146:3005/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(pedido),
-      });
-
-      if (!res.ok) {
-        throw new Error("Erro ao finalizar pedido");
-      }
-
-      alert("Compra realizada com sucesso!");
-
-      setCarrinho([]);
-      localStorage.removeItem("carrinho");
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao enviar pedido.");
-    }
+  if (carrinho.length === 0) {
+    alert("Seu carrinho está vazio.");
+    return;
   }
+
+  const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
+
+  if (!token || !userId) {
+    alert("Faça login para finalizar a compra.");
+    return;
+  }
+
+  const pedido = {
+    userId,
+    items: carrinho.map((item) => ({
+      productId: item.produto.id,
+      name: item.produto.name,
+      price: item.produto.price,
+      quantity: item.quantidade,
+    })),
+  };
+
+  try {
+    const res = await fetch("http://10.200.80.75:3005/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(pedido),
+    });
+
+    console.log("Status:", res.status);
+
+    const resposta = await res.json();
+    console.log("Resposta do servidor:", resposta);
+
+  } catch (err) {
+    console.error(err);
+  }
+}
 
   // TS BURRO NAO SABE LER JSON E PRECISA SER DEFINIDO
   type Produto = {
@@ -133,26 +129,7 @@ export default function TabelaDeVendas() {
     }
 
     load();
-  }, []);
-
-
-  // BUSCA OS PRODUTOS NO BANCO DE DADOS E RETORNA
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await BuscarProdutos();
-        console.log(data);
-        console.log(data.length);
-
-        setProdutos(data);
-      } catch (err) {
-        console.log(err);
-      } finally {
-        setCarregando(false);
-      }
-    }
-    load();
-  }, []);
+  }, [])
 
   // PARA CONTINUAR OS PROUTOS NO SERVIDOR DO CABECINHA
   useEffect(() => {
