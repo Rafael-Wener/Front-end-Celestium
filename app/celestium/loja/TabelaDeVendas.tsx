@@ -37,6 +37,7 @@ export default function TabelaDeVendas() {
 
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [filtro, setFiltro] = useState("Todos");
 
   // BUSCA OS PRODUTOS NO BANCO DE DADOS E RETORNA
   useEffect(() => {
@@ -96,7 +97,11 @@ export default function TabelaDeVendas() {
         {["Todos", "BoxPVP", "Kits", "Vips", "Unban"].map((item) => (
           <button
             key={item}
-            className="rounded-md border border-purple-200 bg-white px-4 py-2 text-sm font-bold text-purple-900 transition hover:bg-purple-50"
+            onClick={() => setFiltro(item)}
+            className={`rounded-xl px-5 py-2 font-semibold transition-all duration-300 cursor-pointer ${filtro === item
+                ? "bg-purple-700 text-white shadow-lg"
+                : "border border-purple-200 bg-white text-purple-700 hover:bg-purple-50"
+              }`}
           >
             {item}
           </button>
@@ -201,7 +206,7 @@ export default function TabelaDeVendas() {
               <span className="text-purple-300">R$ 0,00</span>
             </div>
 
-            <button className="mt-5 w-full rounded-md bg-purple-700 py-3 font-bold text-white hover:bg-purple-600">
+            <button className="mt-5 w-full rounded-md bg-purple-700 py-3 font-bold text-white hover:bg-purple-600 cursor-pointer">
               Finalizar compra
             </button>
 
