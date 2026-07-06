@@ -43,6 +43,7 @@ export default function HeaderLojaCelestium() {
                         </button>
                     </Link>
                 </div>
+
             </div>
         </div>
     );

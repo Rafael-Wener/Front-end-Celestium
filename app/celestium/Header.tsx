@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function HeaderCelestium() {
   return (
     // TELA BACKGROUND
-    <div className="w-full flex items-start px-40 bg-gradient-to-b from-purple-950/40 to-black p-20">
+    <div className="w-full flex items-start px-40 bg-linear-to-b from-purple-950/40 to-black bg-[url('/bg-loja.png')] bg-cover bg-center p-20">
 
       {/* TELA HOME WRAPPER */}
       <div className=" flex flex-col items-start justify-center">
