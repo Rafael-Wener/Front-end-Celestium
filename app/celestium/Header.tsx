@@ -9,7 +9,7 @@ export default function HeaderCelestium() {
       <div className=" flex flex-col items-start justify-center">
 
         {/* SLOGAN HOME */}
-        <h1 className="text-white text-6xl font-bold">A loja oficial do</h1>
+        <h1 className="text-white text-6xl font-bold">O site oficial do</h1>
         <span className="bg-linear-to-r from-purple-500 to-blue-400 bg-clip-text text-transparent text-6xl font-bold">
           CelestiumMC
         </span>

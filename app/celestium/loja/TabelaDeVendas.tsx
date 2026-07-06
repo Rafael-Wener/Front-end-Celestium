@@ -8,7 +8,7 @@ export default function TabelaDeVendas() {
     const token = localStorage.getItem("token");
 
     // ESPERA O BANCO RESPONDER COM O TOKEN
-    const res = await fetch("http://10.200.80.146:3005/products", {
+    const res = await fetch("http://10.200.80.75:3005/products", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -37,7 +37,7 @@ export default function TabelaDeVendas() {
 
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [filtro, setFiltro] = useState("Todos");
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
 
   // BUSCA OS PRODUTOS NO BANCO DE DADOS E RETORNA
   useEffect(() => {
@@ -65,6 +65,14 @@ export default function TabelaDeVendas() {
       </div>
     );
   }
+
+  //FILTRO DOS PRODUTOS
+  const produtosFiltrados =
+    categoriaSelecionada === "Todos"
+      ? produtos
+      : produtos.filter(
+        (produto) => produto.categoryId === categoriaSelecionada
+      );
 
   // CSS E TELA EM SI
   return (
@@ -94,16 +102,21 @@ export default function TabelaDeVendas() {
 
       {/* FILTROS */}
       <div className="mb-10 flex flex-wrap gap-3">
-        {["Todos", "BoxPVP", "Kits", "Vips", "Unban"].map((item) => (
+        {[
+          { nome: "Todos", id: "Todos" },
+          { nome: "Vips", id: "3108208f-74b4-426a-a5c2-ee678fc91a60" },
+          { nome: "Celestiuns", id: "0e226e2b-4f7c-4640-b78a-eeadfd5d26b1" },
+          { nome: "Chaves", id: "8bfc8bf7-d385-4cf4-8617-0913f1cb82c8" },
+        ].map((categoria) => (
           <button
-            key={item}
-            onClick={() => setFiltro(item)}
-            className={`rounded-xl px-5 py-2 font-semibold transition-all duration-300 cursor-pointer ${filtro === item
-                ? "bg-purple-700 text-white shadow-lg"
-                : "border border-purple-200 bg-white text-purple-700 hover:bg-purple-50"
+            key={categoria.id}
+            onClick={() => setCategoriaSelecionada(categoria.id)}
+            className={`rounded-md border px-4 py-2 text-sm font-bold transition ${categoriaSelecionada === categoria.id
+                ? "bg-purple-700 text-white border-purple-700"
+                : "border-purple-200 bg-white text-purple-900 hover:bg-purple-50"
               }`}
           >
-            {item}
+            {categoria.nome}
           </button>
         ))}
       </div>
@@ -113,7 +126,7 @@ export default function TabelaDeVendas() {
 
         {/* PRODUTOS */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {produtos.map((produto) => (
+          {produtosFiltrados.map((produto) => (
             <div
               key={produto.id}
               className="group overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:border-purple-500 hover:shadow-2xl"
@@ -165,7 +178,7 @@ export default function TabelaDeVendas() {
                   </div>
                 </div>
 
-                <button className="mt-6 rounded-xl bg-gradient-to-r from-purple-700 to-fuchsia-600 py-3 font-bold text-white transition hover:scale-[1.02] hover:shadow-lg">
+                <button className="mt-6 rounded-xl bg-gradient-to-r from-purple-700 to-fuchsia-600 py-3 font-bold text-white transition hover:scale-[1.02] hover:shadow-lg cursor-pointer">
                   Adicionar ao carrinho
                 </button>
               </div>

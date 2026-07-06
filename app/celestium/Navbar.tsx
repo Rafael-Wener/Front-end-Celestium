@@ -39,40 +39,12 @@ export default function NavbarCelestium() {
 
             {/* PARTE DO MENU */}
             <div className="flex items-center gap-6 justify-center font-bold">
-                <a
-                    href="#"
-                    className="text-white text-sm border-b-2 border-transparent hover:border-b-purple-500 transition-colors duration-300"
-                >
-                    Ínicio
-                </a>
+                <a href="#" className="text-white text-sm border-b-2 border-transparent hover:border-b-purple-500 transition-colors duration-300">Ínicio</a>
 
-                <a
-                    href="/celestium/loja"
-                    className="text-white text-sm border-b-2 border-transparent hover:border-b-purple-500 transition-colors duration-300"
-                >
-                    Loja
-                </a>
+                <a href="/celestium/loja" className="text-white text-sm border-b-2 border-transparent hover:border-b-purple-500 transition-colors duration-300">Loja</a>
+                
+                <a href="https://discord.gg/MF2m9DE8s" className="text-white text-sm border-b-2 border-transparent hover:border-b-purple-500 transition-colors duration-300">Discord</a>
 
-                <a
-                    href="#"
-                    className="text-white text-sm border-b-2 border-transparent hover:border-b-purple-500 transition-colors duration-300"
-                >
-                    Moedas
-                </a>
-
-                <a
-                    href="https://discord.gg/MF2m9DE8s"
-                    className="text-white text-sm border-b-2 border-transparent hover:border-b-purple-500 transition-colors duration-300"
-                >
-                    Discord
-                </a>
-
-                <a
-                    href="#"
-                    className="text-white text-sm border-b-2 border-transparent hover:border-b-purple-500 transition-colors duration-300"
-                >
-                    Suporte
-                </a>
             </div>
 
             {/* PARTE DO LOGIN */}

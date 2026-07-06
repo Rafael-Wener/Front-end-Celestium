@@ -43,46 +43,6 @@ export default function HeaderLojaCelestium() {
                         </button>
                     </Link>
                 </div>
-
-                {/* SEÇÃO DE FEATURES DO SITE WRAPPER*/}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-60 mt-16 pt-8 border-t border-purple-950/40">
-
-                    {/* AMBIENTE SEGURO */}
-                    <div className="flex items-center gap-3 justify-center md:justify-start">
-                        <img className="h-6 w-6 flex flex-row filter-[invert(40%)_sepia(80%)_saturate(500%)_hue-rotate(240deg)]" src="/escudo-de-seguranca.png" alt="icone de segurança" />
-                        <div className="flex flex-col">
-                            <h2 className="font-bold">Segurança</h2>
-                            <span className="text-gray-400 text-xs">Ambiente 100% seguro</span>
-                        </div>
-                    </div>
-
-                    {/* ENTREGA AUMOMATICA */}
-                    <div className="flex items-center gap-3 justify-center md:justify-start">
-                        <img className="h-6 w-6 flex flex-row filter-[invert(40%)_sepia(80%)_saturate(500%)_hue-rotate(240deg)]" src="/raio.png" alt="icone de raio" />
-                        <div className="flex flex-col">
-                            <h2 className="font-bold">Entrega Automática</h2>
-                            <span className="text-gray-400 text-xs">Itens entregues na hora</span>
-                        </div>
-                    </div>
-
-                    {/* SUPORTE RAPIDO */}
-                    <div className="flex items-center gap-3 justify-center md:justify-start">
-                        <img className="h-6 w-6 flex flex-row filter-[invert(40%)_sepia(80%)_saturate(500%)_hue-rotate(240deg)]" src="/fone-de-ouvido.png" alt="icone de suporte digital" />
-                        <div className="flex flex-col">
-                            <h2 className="font-bold">Suporte Rápido</h2>
-                            <span className="text-gray-400 text-xs">Equipe sempre online</span>
-                        </div>
-                    </div>
-
-                    {/* PAGAMENTO SEGURO */}
-                    <div className="flex items-center gap-3 justify-center md:justify-start">
-                        <img className="h-6 w-6 flex flex-row filter-[invert(40%)_sepia(80%)_saturate(500%)_hue-rotate(240deg)]" src="/cadeado.png" alt="icone e cadeado" />
-                        <div className="flex flex-col">
-                            <h2 className="font-bold">Pagamentos Seguros</h2>
-                            <span className="text-gray-400 text-xs">Compre com confiança</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
