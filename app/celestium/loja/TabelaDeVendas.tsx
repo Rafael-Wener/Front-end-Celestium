@@ -35,9 +35,28 @@ export default function TabelaDeVendas() {
     rating: number;
   };
 
+  // TIPAGEM PRA CONTAGEM DOS PRODUTOS
+  type ItemCarrinho = {
+    produto: Produto;
+    quantidade: number;
+  };
+
   const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
+
+  // REDUCER PARA + E - NO CARRINHO
+  const total = carrinho.reduce((soma, item) => {
+    return soma + item.produto.price * item.quantidade;
+  }, 0);
+
+  //FILTRO DOS PRODUTOS
+  const produtosFiltrados = categoriaSelecionada === "Todos"
+    ? produtos
+    : produtos.filter(
+      (produto) => produto.categoryId === categoriaSelecionada
+    );
 
   // BUSCA OS PRODUTOS NO BANCO DE DADOS E RETORNA
   useEffect(() => {
@@ -66,13 +85,44 @@ export default function TabelaDeVendas() {
     );
   }
 
-  //FILTRO DOS PRODUTOS
-  const produtosFiltrados =
-    categoriaSelecionada === "Todos"
-      ? produtos
-      : produtos.filter(
-        (produto) => produto.categoryId === categoriaSelecionada
+  //PARA ADICIONAR AO CARRINHO
+  function adicionarAoCarrinho(produto: Produto) {
+    setCarrinho((carrinhoAtual) => {
+      const existente = carrinhoAtual.find(
+        (item) => item.produto.id === produto.id
       );
+
+      if (existente) {
+        return carrinhoAtual.map((item) =>
+          item.produto.id === produto.id
+            ? { ...item, quantidade: item.quantidade + 1 }
+            : item
+        );
+      }
+
+      return [...carrinhoAtual, { produto, quantidade: 1 }];
+    });
+  }
+
+  // AGORA A BLEQUINSONS DA FUNCÇÃO PARA DIMIUIR OS PRODUTOS
+  function diminuirQuantidade(produtoId: string) {
+    setCarrinho((carrinhoAtual) =>
+      carrinhoAtual
+        .map((item) =>
+          item.produto.id === produtoId
+            ? { ...item, quantidade: item.quantidade - 1 }
+            : item
+        )
+        .filter((item) => item.quantidade > 0)
+    );
+  }
+  // E PARA REMOVER PARA SEMPRE O BAGUI DO PRODUTO
+  function removerProduto(produtoId: string) {
+    setCarrinho((carrinhoAtual) =>
+      carrinhoAtual.filter((item) => item.produto.id !== produtoId)
+    );
+  }
+
 
   // CSS E TELA EM SI
   return (
@@ -112,8 +162,8 @@ export default function TabelaDeVendas() {
             key={categoria.id}
             onClick={() => setCategoriaSelecionada(categoria.id)}
             className={`rounded-md border px-4 py-2 text-sm font-bold transition ${categoriaSelecionada === categoria.id
-                ? "bg-purple-700 text-white border-purple-700"
-                : "border-purple-200 bg-white text-purple-900 hover:bg-purple-50"
+              ? "bg-purple-700 text-white border-purple-700"
+              : "border-purple-200 bg-white text-purple-900 hover:bg-purple-50"
               }`}
           >
             {categoria.nome}
@@ -131,7 +181,7 @@ export default function TabelaDeVendas() {
               key={produto.id}
               className="group overflow-hidden rounded-2xl border border-purple-200 bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:border-purple-500 hover:shadow-2xl"
             >
-              <div className="relative flex h-44 items-center justify-center bg-gradient-to-br from-[#2a1148] via-[#5227a5] to-[#8b5cf6]">
+              <div className="relative flex h-44 items-center justify-center bg-linear-to-br from-[#2a1148] via-[#5227a5] to-[#8b5cf6]">
                 {produto.tag && (
                   <span className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-bold text-purple-700 shadow">
                     {produto.tag}
@@ -158,7 +208,7 @@ export default function TabelaDeVendas() {
                   {produto.name}
                 </h3>
 
-                <p className="mt-3 min-h-[60px] text-sm leading-6 text-gray-500">
+                <p className="mt-3 min-h-15 text-sm leading-6 text-gray-500">
                   {produto.description}
                 </p>
 
@@ -178,7 +228,10 @@ export default function TabelaDeVendas() {
                   </div>
                 </div>
 
-                <button className="mt-6 rounded-xl bg-gradient-to-r from-purple-700 to-fuchsia-600 py-3 font-bold text-white transition hover:scale-[1.02] hover:shadow-lg cursor-pointer">
+                <button
+                  onClick={() => adicionarAoCarrinho(produto)}
+                  className="mt-6 rounded-xl bg-linear-to-r from-purple-700 to-fuchsia-600 py-3 font-bold text-white transition hover:scale-[1.02] hover:shadow-lg cursor-pointer"
+                >
                   Adicionar ao carrinho
                 </button>
               </div>
@@ -197,41 +250,97 @@ export default function TabelaDeVendas() {
           </div>
 
           {/* EMPTY STATE */}
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <img
-              src="/cesta-de-compras.png"
-              className="mb-4 h-10 w-10 invert opacity-60"
-            />
-            <p className="font-bold">Carrinho vazio</p>
-            <span className="mt-2 text-sm text-gray-400">
-              Adicione produtos para ver aqui
-            </span>
-          </div>
-
-          <div className="border-t border-purple-900 pt-5">
-            <div className="flex justify-between text-sm text-gray-300">
-              <span>Subtotal</span>
-              <span>R$ 0,00</span>
+          {carrinho.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <img
+                src="/cesta-de-compras.png"
+                className="mb-4 h-10 w-10 invert opacity-60"
+              />
+              <p className="font-bold">Carrinho vazio</p>
+              <span className="mt-2 text-sm text-gray-400">
+                Adicione produtos para ver aqui
+              </span>
             </div>
+          ) : (
+            <div className="mt-5 flex flex-col gap-4">
+              {carrinho.map((item) => (
+                <div
+                  key={item.produto.id}
+                  className="rounded-xl border border-purple-800 bg-[#1d1238] p-4"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="font-bold text-white">
+                        {item.produto.name}
+                      </h4>
 
-            <div className="mt-2 flex justify-between text-lg font-bold">
-              <span>Total</span>
-              <span className="text-purple-300">R$ 0,00</span>
+                      <p className="mt-1 text-sm text-gray-400">
+                        R$ {item.produto.price.toFixed(2)} cada
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => removerProduto(item.produto.id)}
+                      className="text-xs font-bold text-red-400 transition hover:text-red-300"
+                    >
+                      Remover
+                    </button>
+                  </div>
+
+                  <div className="mt-5 flex items-center justify-between">
+                    <div className="flex items-center overflow-hidden rounded-lg border border-purple-700">
+                      <button
+                        onClick={() => diminuirQuantidade(item.produto.id)}
+                        className="h-9 w-9 bg-purple-900 text-lg font-bold transition hover:bg-purple-700"
+                      >
+                        −
+                      </button>
+
+                      <span className="flex h-9 w-10 items-center justify-center bg-[#140b2b] font-bold">
+                        {item.quantidade}
+                      </span>
+
+                      <button
+                        onClick={() => adicionarAoCarrinho(item.produto)}
+                        className="h-9 w-9 bg-purple-900 text-lg font-bold transition hover:bg-purple-700"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <strong className="text-lg text-purple-300">
+                      R$ {(item.produto.price * item.quantidade).toFixed(2)}
+                    </strong>
+                  </div>
+                </div>
+              ))}
+
+              <div className="border-t border-purple-900 pt-5">
+                <div className="flex justify-between text-sm text-gray-300">
+                  <span>Subtotal</span>
+                  <span>R$ {total.toFixed(2)}</span>
+                </div>
+
+                <div className="mt-2 flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span className="text-purple-300">R$ {total.toFixed(2)}</span>
+                </div>
+
+                <button className="mt-5 w-full rounded-md bg-purple-700 py-3 font-bold text-white hover:bg-purple-600 cursor-pointer">
+                  Finalizar compra
+                </button>
+
+                <Link
+                  href="/login"
+                  className="mt-3 block text-center text-sm text-purple-300 underline"
+                >
+                  Entrar antes de comprar
+                </Link>
+              </div>
             </div>
-
-            <button className="mt-5 w-full rounded-md bg-purple-700 py-3 font-bold text-white hover:bg-purple-600 cursor-pointer">
-              Finalizar compra
-            </button>
-
-            <Link
-              href="/login"
-              className="mt-3 block text-center text-sm text-purple-300 underline"
-            >
-              Entrar antes de comprar
-            </Link>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
-}
+} 
