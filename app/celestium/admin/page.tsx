@@ -58,12 +58,12 @@ export default function AdminPage() {
       <AdminSidebar selectedSection={selectedSection} onSelectSection={setSelectedSection} />
 
       <div className="ml-60">
-        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-[#09060f]/90 px-8 py-6 shadow-xl shadow-black/40">
+        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-[#09060f]/90 px-40 py-6 shadow-xl shadow-black/40">
           <AdminHeader />
           <AdminUserLabel user={user} onLogout={handleLogout} />
         </header>
 
-        <main className="px-8 py-8">
+        <main className="px-40 py-8">
           <AdminDashboard totalProdutos={totalProdutos} totalPedidos={totalPedidos} />
 
           <div className="mt-8 space-y-8">

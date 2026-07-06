@@ -1,7 +1,7 @@
 'use client';
 
+import { API_BASE_URL } from '@/utils/config';
 import { useEffect, useState } from 'react';
-import { API_BASE_URL } from '../../../utils/config';
 
 export type Produto = {
   id: string;

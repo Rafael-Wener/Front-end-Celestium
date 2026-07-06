@@ -62,6 +62,11 @@ export default function TabelaDeVendas() {
     const resposta = await res.json();
     console.log("Resposta do servidor:", resposta);
 
+    alert("Compra realizada com sucesso!");
+
+setCarrinho([]);
+localStorage.removeItem("carrinho");
+
   } catch (err) {
     console.error(err);
   }

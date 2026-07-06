@@ -40,10 +40,7 @@ export default function AdminSidebar({ selectedSection, onSelectSection }: Admin
           ))}
         </div>
 
-        <div className="mt-8 rounded border border-white/10 bg-white/5 p-5">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Acesso rápido</p>
-          <p className="mt-3 text-sm text-slate-300">Use o menu para alternar entre produtos, compras e histórico.</p>
-        </div>
+        {/* Acesso rápido removido conforme solicitado */}
       </div>
     </aside>
   );
