@@ -11,12 +11,18 @@ export default function NavBarLoja() {
     if (nick) setNickname(nick);
   }, []);
 
-  function handleLogout() {
+function handleLogout() {
+    // 1. Limpa os dados de autenticação e identificação do usuário
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("nickname");
+    
+    // 2. Reseta o estado local do nickname
     setNickname("");
-  }
+    
+    // 3. Força o F5 automático para atualizar a página inteira
+    window.location.reload();
+}
 
   return (
     <div className="bg-gray-950 w-full h-22 flex items-center justify-between px-40">
