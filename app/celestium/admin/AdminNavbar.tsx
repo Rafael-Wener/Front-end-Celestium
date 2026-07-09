@@ -15,24 +15,35 @@ interface UserSession {
 export default function NavbarAdmin({ onLogout }: NavbarAdminProps) {
   const router = useRouter();
   const [usuario, setUsuario] = useState<UserSession | null>(null);
+  const [autorizado, setAutorizado] = useState(false); // Controle simples de exibição
 
   useEffect(() => {
-    // 1. Tenta buscar os dados do usuário salvos no localStorage (ou decodificar do Token)
     const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
     
     if (!token) {
-      // Se não tiver token, já manda de volta pro login por segurança
       router.push("/login");
       return;
     }
 
     try {
-      // Opção A: Se o seu backend salva o objeto do usuário no localStorage ao logar:
-      const userData = localStorage.getItem("user");
+      let isAdmin = false;
+      let nomeUsuario = "Admin";
+      let emailUsuario = "Painel";
+
       if (userData) {
-        setUsuario(JSON.parse(userData));
+        const user = JSON.parse(userData);
+        nomeUsuario = user.name || user.username || nomeUsuario;
+        emailUsuario = user.email || emailUsuario;
+
+        // Checagem ultra tolerante: aceita "ADMIN", "admin", ou se o email/role tiver 'admin' no texto
+        const roleString = String(user.role || "").toUpperCase();
+        const emailString = String(user.email || "").toLowerCase();
+        
+        if (roleString === "ADMIN" || user.isAdmin === true || emailString.includes("admin")) {
+          isAdmin = true;
+        }
       } else {
-        // Opção B: Caso não tenha o objeto "user", decodifica a carga útil (payload) do JWT
         const base64Url = token.split(".")[1];
         const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
         const jsonPayload = decodeURIComponent(
@@ -44,29 +55,45 @@ export default function NavbarAdmin({ onLogout }: NavbarAdminProps) {
         );
         const tokenDecodificado = JSON.parse(jsonPayload);
         
-        setUsuario({
-          name: tokenDecodificado.name || tokenDecodificado.username || "Admin",
-          email: tokenDecodificado.email || "Painel",
-        });
+        nomeUsuario = tokenDecodificado.name || tokenDecodificado.username || nomeUsuario;
+        emailUsuario = tokenDecodificado.email || emailUsuario;
+
+        const roleString = String(tokenDecodificado.role || "").toUpperCase();
+        const emailString = String(emailUsuario).toLowerCase();
+
+        if (roleString === "ADMIN" || tokenDecodificado.isAdmin === true || emailString.includes("admin")) {
+          isAdmin = true;
+        }
       }
+
+      if (isAdmin) {
+        setUsuario({ name: nomeUsuario, email: emailUsuario });
+        setAutorizado(true);
+      } else {
+        alert("Acesso restrito apenas para administradores!");
+        router.push("/login");
+      }
+
     } catch (error) {
       console.error("Erro ao ler dados da sessão:", error);
+      router.push("/login");
     }
   }, [router]);
 
   // Função unificada para deslogar com segurança
   function handleSair() {
-    // Se foi passada alguma função customizada por Props, executa ela
     if (onLogout) {
       onLogout();
     }
 
-    // Limpa as credenciais de login armazenadas
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
-    // Redireciona o usuário imediatamente para a tela de Login
     router.push("/login");
+  }
+
+  // Se o usuário ainda não foi validado como admin, não mostra nada (evita piscar o painel)
+  if (!autorizado) {
+    return null;
   }
 
   return (
@@ -98,8 +125,6 @@ export default function NavbarAdmin({ onLogout }: NavbarAdminProps) {
 
       {/* Lado Direito: Ações e Perfil do Usuário */}
       <div className="flex items-center gap-4">
-        {/* Botão de Status ADMIN com espaçamento largo */}
-
         {/* Caixa de Informações do Usuário/Cargo dinâmico */}
         <div className="flex flex-col justify-center rounded-md px-5 py-1 text-left min-w-[120px] h-[38px]">
           <span className="font-bold text-white leading-tight truncate max-w-[150px]">
