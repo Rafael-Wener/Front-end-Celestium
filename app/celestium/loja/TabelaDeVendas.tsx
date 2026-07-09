@@ -58,7 +58,7 @@ export default function TabelaDeVendas() {
 
   // BUSCA PÚBLICA
   async function BuscarProdutos() {
-    const res = await fetch("http://10.200.80.75:3005/products", {
+    const res = await fetch("http://localhost:3005/products", {
       method: "GET",
     });
 

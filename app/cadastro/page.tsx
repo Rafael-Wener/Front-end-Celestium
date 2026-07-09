@@ -20,7 +20,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const res = await fetch("http://10.200.80.75:3005/users", {
+      const res = await fetch("http://localhost:3005/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
