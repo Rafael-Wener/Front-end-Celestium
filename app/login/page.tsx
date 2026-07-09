@@ -32,11 +32,23 @@ export default function LoginPage() {
         localStorage.setItem("token", data.token);
         localStorage.setItem("userId", data.user.id);
         localStorage.setItem("nickname", data.user.nickname);
+        
+        // Opcional: Salva também no localStorage se o seu app precisar saber em outros locais
+        if (data.user.role === "ADMIN" || data.user.isAdmin) {
+          localStorage.setItem("isAdmin", "true");
+        } else {
+          localStorage.removeItem("isAdmin");
+        }
 
         window.dispatchEvent(new Event("userChanged"));
 
         setTimeout(() => {
-          router.push("/celestium");
+          // REDIRECIONAMENTO INTELIGENTE: Se for ADMIN vai para /admin, senão /celestium
+          if (data.user.role === "ADMIN" || data.user.isAdmin) {
+            router.push("/celestium/admin");
+          } else {
+            router.push("/celestium");
+          }
         }, 900);
       } else {
         setErro(data.message || "Usuário ou senha incorretos!");

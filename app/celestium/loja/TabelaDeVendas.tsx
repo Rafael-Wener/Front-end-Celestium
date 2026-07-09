@@ -56,7 +56,7 @@ export default function TabelaDeVendas() {
     return `${h}:${m}:${s}`;
   }
 
-  // BUSCA PÚBLICA
+  // BUSCA PÚBLICA LOCALHOST
   async function BuscarProdutos() {
     const res = await fetch("http://localhost:3005/products", {
       method: "GET",
@@ -67,6 +67,19 @@ export default function TabelaDeVendas() {
     }
 
     return await res.json();
+  }
+
+  // Função auxiliar para definir imagem padrão caso não exista no banco
+  function obterImagemProduto(produto: Produto) {
+    if (produto.image && produto.image.trim() !== "") {
+      return produto.image;
+    }
+    // Fallback inteligente baseado nas IDs das categorias do seu filtro
+    if (produto.categoryId === "3108208f-74b4-426a-a5c2-ee678fc91a60") return "/itens/vip.png";
+    if (produto.categoryId === "0e226e2b-4f7c-4640-b78a-eeadfd5d26b1") return "/itens/moeda.png";
+    if (produto.categoryId === "8bfc8bf7-d385-4cf4-8617-0913f1cb82c8") return "/itens/chave.png";
+    
+    return "/itens/bau-de-tesouro.png";
   }
 
   // Verifica o login de forma isolada
@@ -104,7 +117,8 @@ export default function TabelaDeVendas() {
     };
 
     try {
-      const res = await fetch("http://10.200.80.75:3005/orders", {
+      // Corrigido de 10.200.80.75:3005 para localhost:3005
+      const res = await fetch("http://localhost:3005/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -179,7 +193,7 @@ export default function TabelaDeVendas() {
           item.produto.id === produto.id ? { ...item, quantidade: item.quantidade + 1 } : item
         );
       }
-      return [...carrinhoAtual, { produto, quantity: 1, quantidade: 1 }];
+      return [...carrinhoAtual, { produto, quantidade: 1 }];
     });
   }
 
@@ -309,7 +323,7 @@ export default function TabelaDeVendas() {
           <p className="mt-2 max-w-2xl text-sm text-neutral-400">Selecione ranks, moedas, kits e extras.</p>
         </div>
         <div className="flex items-center gap-3 rounded-md border border-purple-950/40 bg-[#130d24]/60 px-4 py-3 text-sm font-bold text-purple-300">
-          <img src="/cesta-de-compras.png" alt="" className="h-5 w-5 invert opacity-70" />
+          <img src="/itens/cesta-de-compras.png" alt="" className="h-5 w-5 invert opacity-70" />
           {quantidadeItens} item(ns) no carrinho
         </div>
       </div>
@@ -344,6 +358,7 @@ export default function TabelaDeVendas() {
               key={produto.id}
               className="group overflow-hidden rounded-2xl border border-purple-950/40 bg-[#130d24]/40 shadow-md transition-all duration-300 hover:-translate-y-2 hover:border-purple-500/60 hover:shadow-2xl flex flex-col justify-between"
             >
+              {/* Box da Imagem com o caminho dinâmico mapeado */}
               <div className="relative flex h-44 items-center justify-center bg-gradient-to-br from-[#2a1148] via-[#5227a5] to-[#8b5cf6]">
                 {produto.tag && (
                   <span className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-bold text-purple-700 shadow">
@@ -351,7 +366,7 @@ export default function TabelaDeVendas() {
                   </span>
                 )}
                 <img
-                  src={produto.image || "/bau-de-tesouro.png"}
+                  src={obterImagemProduto(produto)}
                   alt={produto.name}
                   className="h-24 w-24 object-contain transition duration-300 group-hover:scale-110"
                 />
@@ -397,7 +412,7 @@ export default function TabelaDeVendas() {
 
           {carrinho.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <img src="/cesta-de-compras.png" className="mb-4 h-10 w-10 invert opacity-40" alt="" />
+              <img src="/itens/cesta-de-compras.png" className="mb-4 h-10 w-10 invert opacity-40" alt="" />
               <p className="font-bold text-neutral-300">Carrinho vazio</p>
               <span className="mt-2 text-sm text-neutral-500">Adicione produtos para ver aqui</span>
             </div>
