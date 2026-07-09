@@ -11,8 +11,8 @@ export default function SidebarAdmin({ initialActiveTab = "Produtos", onTabChang
   const [activeTab, setActiveTab] = useState(initialActiveTab);
 
   const menuItems = [
-    { name: "Adicionar Produtos", id: "adicionar-produtos" },
     { name: "Produtos", id: "produtos" },
+    { name: "Adicionar Produtos", id: "adicionar-produtos" },
     { name: "Categorias", id: "categorias" },
     { name: "Pedidos", id: "pedidos" },
     { name: "Relatórios", id: "relatorios" },

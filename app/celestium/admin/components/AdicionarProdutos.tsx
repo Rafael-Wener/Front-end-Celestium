@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface Categoria {
   id: string;
@@ -13,7 +13,7 @@ export default function Produto() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [image, setImage] = useState("/produtos/VipImperador.png"); // Padrão inicial
+  const [image, setImage] = useState(""); // Começa vazio para o upload obrigatório
   const [tag, setTag] = useState("");
 
   // Estados de controle
@@ -21,23 +21,10 @@ export default function Produto() {
   const [carregandoCategorias, setCarregandoCategorias] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState({ tipo: "", texto: "" });
-
-  // Lista fixa de imagens disponíveis na sua pasta public/produtos
-  const opcoesImagens = [
-    { url: "/produtos/VipImperador.png", label: "VIP Imperador" },
-    { url: "/produtos/VipLorde.png", label: "VIP Lorde" },
-    { url: "/produtos/VipNobre.png", label: "VIP Nobre" },
-    { url: "/produtos/ChaveComum.png", label: "Chave Comum" },
-    { url: "/produtos/ChaveEpica.png", label: "Chave Épica" },
-    { url: "/produtos/ChaveLendaria.png", label: "Chave Lendária" },
-    { url: "/produtos/ChaveRara.png", label: "Chave Rara" },
-    { url: "/produtos/Coin1500.png", label: "1.500 Coins" },
-    { url: "/produtos/Coin3000.png", label: "3.000 Coins" },
-    { url: "/produtos/Coin4500.png", label: "4.500 Coins" },
-    { url: "/produtos/Coin7500.png", label: "7.500 Coins" },
-    { url: "/produtos/Coin15000.png", label: "15.000 Coins" },
-    { url: "/produtos/Coin25000.png", label: "25.000 Coins" },
-  ];
+  
+  // Estado para controlar o visual do "Arrastar arquivo"
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Carrega as categorias do banco de dados dinamicamente
   async function carregarCategorias() {
@@ -65,14 +52,56 @@ export default function Produto() {
     carregarCategorias();
   }, []);
 
+  // Função utilitária para converter arquivo em String Base64
+  const processarArquivoDeImagem = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setMensagem({ tipo: "erro", texto: "Por favor, selecione apenas arquivos de imagem (PNG, JPG, WEBP)." });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        setImage(reader.result); // Define a string Base64 no estado da imagem
+        setMensagem({ tipo: "", texto: "" }); // Limpa erros prévios se houver
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Eventos de Drag & Drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processarArquivoDeImagem(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processarArquivoDeImagem(e.target.files[0]);
+    }
+  };
+
   // Envio do formulário para criar o produto no Backend
   async function handleCriarProduto(e: React.FormEvent) {
     e.preventDefault();
     setMensagem({ tipo: "", texto: "" });
 
     // Validações básicas antes de enviar
-    if (!name.trim() || !description.trim() || !price || !categoryId) {
-      setMensagem({ tipo: "erro", texto: "Por favor, preencha todos os campos obrigatórios!" });
+    if (!name.trim() || !description.trim() || !price || !categoryId || !image) {
+      setMensagem({ tipo: "erro", texto: "Por favor, preencha todos os campos obrigatórios e envie um ícone!" });
       return;
     }
 
@@ -90,7 +119,7 @@ export default function Produto() {
           name,
           description,
           price: parseFloat(price) || 0,
-          image,
+          image, // Envia a string Base64 gerada
           categoryId,
           tag: tag.trim() !== "" ? tag : null,
         }),
@@ -106,7 +135,7 @@ export default function Produto() {
         setDescription("");
         setPrice("");
         setCategoryId("");
-        setImage("/produtos/VipImperador.png");
+        setImage("");
         setTag("");
       } else {
         setMensagem({ tipo: "erro", texto: data.message || "Erro ao criar o produto no servidor." });
@@ -170,20 +199,49 @@ export default function Produto() {
               </select>
             </div>
 
-            {/* CAMPO: SELETOR DE ÍCONES */}
+            {/* NOVO CAMPO: ÁREA DE UPLOAD DRAG AND DROP */}
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold uppercase tracking-wide text-neutral-400">Ícone Ilustrativo *</label>
-              <select
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                className="w-full rounded-md border border-purple-950/60 bg-[#0c061a] px-4 py-3 text-sm text-white outline-none transition focus:border-purple-500 cursor-pointer"
+              
+              {/* Input escondido nativo */}
+              <input 
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+
+              {/* Box interativo visual */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`w-full rounded-md border-2 border-dashed px-4 py-2.5 text-sm flex items-center justify-between cursor-pointer transition h-[46px] ${
+                  isDragging 
+                    ? "border-purple-400 bg-purple-950/20" 
+                    : image 
+                      ? "border-green-600/50 bg-green-950/5" 
+                      : "border-purple-950/60 bg-[#0c061a] hover:border-purple-800"
+                }`}
               >
-                {opcoesImagens.map((opt) => (
-                  <option key={opt.url} value={opt.url} className="bg-[#110a22] text-white">
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                <div className="flex items-center gap-2 truncate max-w-[80%]">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 flex-shrink-0 ${image ? "text-green-400" : "text-neutral-500"}`}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                  <span className={`truncate text-xs ${image ? "text-green-400 font-medium" : "text-neutral-500"}`}>
+                    {image ? "Imagem Carregada!" : "Arraste ou clique para enviar"}
+                  </span>
+                </div>
+
+                {/* Mini Preview se a imagem existir */}
+                {image && (
+                  <div className="w-7 h-7 rounded border border-purple-950 overflow-hidden bg-[#0a0516] flex-shrink-0">
+                    <img src={image} alt="Preview" className="w-full h-full object-contain" />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -203,12 +261,12 @@ export default function Produto() {
 
             {/* CAMPO: TAG PROMOCIONAL */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wide text-neutral-400">Tag Promocional (Opcional)</label>
+              <label className="text-xs font-bold uppercase tracking-wide text-neutral-400">Tag Opcional)</label>
               <input
                 type="text"
                 value={tag}
                 onChange={(e) => setTag(e.target.value)}
-                placeholder="Ex: +20% OFF, RECOMENDADO"
+                placeholder="Ex: Em alta"
                 className="w-full rounded-md border border-purple-950/60 bg-[#0c061a] px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none transition focus:border-purple-500"
               />
             </div>

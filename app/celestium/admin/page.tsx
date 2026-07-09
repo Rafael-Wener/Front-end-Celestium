@@ -18,10 +18,11 @@ export default function AdminDashboard() {
   // Função que decide qual tela exibir no miolo da página
   function renderizarConteudo() {
     switch (abaAtiva) {
-      case "Adicionar Produtos":
-        return <AdicionarProdutos />;
+
       case "Produtos":
         return <Produtos />;
+          case "Adicionar Produtos":
+        return <AdicionarProdutos />;
       case "Categorias": 
         return <Categorias />;
       case "Pedidos":
