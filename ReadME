@@ -1,7 +1,7 @@
 PARA INICIAR O SITE DEVE-SE SEGUIR OS SEGUINTES PASSOS
 ANTES DE FAZER OS PASSOS DO FRONTEND, FAÇA NO BACKEND PRIMEIRAMENTE
 
--1. Abra o painel e e selecione o command Prompt, escreva "npm install" e de enter
+-1. Abra o terminal e selecione o command Prompt, escreva "npm install" e de enter
 
 -2. Aguarde a instalação e em seguida escreva "npm run dev"
 
