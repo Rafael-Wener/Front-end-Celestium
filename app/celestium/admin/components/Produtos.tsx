@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 interface Categoria {
   id: string;
@@ -15,13 +15,33 @@ interface Produto {
   image: string;
   categoryId: string;
   tag: string | null;
+  minecraftCommands: string;
 }
+
+// 📂 LISTA DE FOTOS DA SUA PASTA public/produtos
+// Adicione ou mude os nomes aqui conforme os arquivos reais que você colocou lá!
+const IMAGENS_DISPONIVEIS = [
+  "ChaveComum.png",
+  "ChaveEpica.png",
+  "ChaveLendaria.png",
+  "ChaveRara.png",
+  "Coin1500.png",
+  "Coin3000.png",
+  "Coin4500.png",
+  "Coin7500.png",
+  "Coin15000.png",
+  "Coin25000.png",
+  "VipImperador.png",
+  "VipLord.png",
+  "VipNobre.png",
+];
 
 export default function ListarProdutos() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState({ tipo: "", texto: "" });
+  const [montado, setMontado] = useState(false);
 
   // ESTADOS PARA EDIÇÃO
   const [produtoEditando, setProdutoEditando] = useState<Produto | null>(null);
@@ -29,26 +49,37 @@ export default function ListarProdutos() {
   const [editDescription, setEditDescription] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
-  const [editImage, setEditImage] = useState("");
+  const [editImage, setEditImage] = useState(""); // Guarda o nome do arquivo selecionado (Ex: "vip_iron.png")
   const [editTag, setEditTag] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
-  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editRating, setRating] = useState("");
+  const [editMinecraftCommands, setEditMinecraftCommands] = useState("");
 
-  // Carrega produtos e categorias
+  function extrairComandoTexto(jsonString: string | null): string {
+    if (!jsonString) return "";
+    try {
+      const parsed = JSON.parse(jsonString);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed[0];
+      }
+      return "";
+    } catch (e) {
+      return jsonString;
+    }
+  }
+
   async function carregarDados() {
+    if (typeof window === "undefined") return;
     const token = localStorage.getItem("token");
+    
     try {
       setCarregando(true);
       
-      // Busca Categorias
       const resCat = await fetch("http://localhost:3005/categories", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const dataCat = await resCat.json();
       if (resCat.ok) setCategorias(dataCat);
 
-      // Busca Produtos
       const resProd = await fetch("http://localhost:3005/products", {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -57,44 +88,44 @@ export default function ListarProdutos() {
 
     } catch (err) {
       console.error(err);
-      setMensagem({ tipo: "erro", texto: "Erro de conexão ao buscar dados." });
+      setMensagem({ tipo: "erro", texto: "Erro de conexão ao buscar dados do Celestium." });
     } finally {
       setCarregando(false);
     }
   }
 
   useEffect(() => {
+    setMontado(true);
     carregarDados();
   }, []);
 
-  // FUNÇÃO: Abre o formulário/modal preenchido com os dados atuais do produto
   function iniciarEdicao(produto: Produto) {
     setProdutoEditando(produto);
     setEditName(produto.name);
     setEditDescription(produto.description);
     setEditPrice(produto.price.toString());
     setEditCategoryId(produto.categoryId);
-    setEditImage(produto.image || "");
+    
+    // Remove caminhos longos se existirem para deixar apenas o nome do arquivo
+    const nomeArquivo = produto.image ? produto.image.replace("/produtos/", "") : IMAGENS_DISPONIVEIS[0];
+    setEditImage(nomeArquivo);
+    
     setEditTag(produto.tag || "");
+    setEditMinecraftCommands(extrairComandoTexto(produto.minecraftCommands));
   }
 
-  // Conversão de arquivo de imagem para Base64
-  const processarImagemEdicao = (file: File) => {
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") setEditImage(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // FUNÇÃO: Envia a atualização (PUT) para o Backend
   async function handleSalvarEdicao(e: React.FormEvent) {
     e.preventDefault();
     if (!produtoEditando) return;
 
     const token = localStorage.getItem("token");
-    setSalvandoEdicao(true);
+
+    const comandoFormatadoJSON = editMinecraftCommands.trim() !== "" 
+      ? JSON.stringify([editMinecraftCommands.trim()]) 
+      : JSON.stringify([]);
+
+    // Salva no banco com o prefixo correto da pasta pública (/produtos/nome_da_foto.png)
+    const caminhoCompletoImagem = `/produtos/${editImage}`;
 
     try {
       const res = await fetch(`http://localhost:3005/products/${produtoEditando.id}`, {
@@ -107,9 +138,10 @@ export default function ListarProdutos() {
           name: editName,
           description: editDescription,
           price: parseFloat(editPrice) || 0,
-          image: editImage,
+          image: caminhoCompletoImagem, 
           categoryId: editCategoryId,
           tag: editTag.trim() !== "" ? editTag : null,
+          minecraftCommands: comandoFormatadoJSON,
         }),
       });
 
@@ -117,7 +149,7 @@ export default function ListarProdutos() {
         setProdutos((prev) =>
           prev.map((p) =>
             p.id === produtoEditando.id
-              ? { ...p, name: editName, description: editDescription, price: parseFloat(editPrice), image: editImage, categoryId: editCategoryId, tag: editTag.trim() !== "" ? editTag : null }
+              ? { ...p, name: editName, description: editDescription, price: parseFloat(editPrice), image: caminhoCompletoImagem, categoryId: editCategoryId, tag: editTag.trim() !== "" ? editTag : null, minecraftCommands: comandoFormatadoJSON }
               : p
           )
         );
@@ -129,16 +161,11 @@ export default function ListarProdutos() {
     } catch (err) {
       console.error(err);
       setMensagem({ tipo: "erro", texto: "Erro de conexão ao editar." });
-    } finally {
-      setSalvandoEdicao(false);
     }
   }
 
-  // FUNÇÃO: Deleta o produto no Backend e remove da tabela
   async function handleDeletarProduto(id: string, nome: string) {
-    if (!confirm(`Tem certeza que deseja excluir o produto "${nome}" definitivamente?`)) {
-      return;
-    }
+    if (!confirm(`Tem certeza que deseja excluir o produto "${nome}" definitivamente?`)) return;
 
     const token = localStorage.getItem("token");
     try {
@@ -151,18 +178,25 @@ export default function ListarProdutos() {
         setProdutos((prev) => prev.filter((p) => p.id !== id));
         setMensagem({ tipo: "sucesso", texto: `Produto "${nome}" removido com sucesso!` });
       } else {
-        setMensagem({ tipo: "erro", texto: "Não foi possível deletar o produto no servidor." });
+        setMensagem({ tipo: "erro", texto: "Não foi possível deletar o produto." });
       }
     } catch (err) {
       console.error(err);
-      setMensagem({ tipo: "erro", texto: "Erro de conexão ao tentar deletar." });
+      setMensagem({ tipo: "erro", texto: "Erro de conexão ao deletar." });
     }
+  }
+
+  if (!montado) {
+    return (
+      <div className="p-12 text-center text-sm text-neutral-400 animate-pulse bg-[#0a0516] min-h-screen">
+        Sincronizando painel administrativo...
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6 bg-[#0a0516] text-white min-h-screen p-1">
       
-      {/* CABEÇALHO */}
       <div>
         <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-400">// GERENCIAMENTO</span>
         <h2 className="text-2xl font-bold mt-1 text-white">Produtos Cadastrados</h2>
@@ -203,7 +237,33 @@ export default function ListarProdutos() {
 
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold uppercase text-neutral-400">Tag Promocional</label>
-              <input type="text" value={editTag} onChange={(e) => setEditTag(e.target.value)} placeholder="Ex: +10% COINS, NOVO" className="rounded-md border border-purple-950 bg-[#0c061a] px-3 py-2 text-sm text-white outline-none focus:border-purple-500" />
+              <input type="text" value={editTag} onChange={(e) => setEditTag(e.target.value)} placeholder="Ex: +10% COINS" className="rounded-md border border-purple-950 bg-[#0c061a] px-3 py-2 text-sm text-white outline-none focus:border-purple-500" />
+            </div>
+
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <label className="text-xs font-bold uppercase text-neutral-400">Comando Executável (Minecraft)</label>
+              <input type="text" value={editMinecraftCommands} onChange={(e) => setEditMinecraftCommands(e.target.value)} placeholder="Ex: give {player} diamond 64" className="rounded-md border border-purple-950 bg-[#0c061a] px-3 py-2 text-sm text-purple-300 font-mono outline-none focus:border-purple-500" />
+            </div>
+
+            {/* SELETOR DE IMAGENS ATUALIZADO */}
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <label className="text-xs font-bold uppercase text-neutral-400">Escolher Ícone Ilustrativo</label>
+              <div className="flex gap-3 items-center">
+                <select 
+                  value={editImage} 
+                  onChange={(e) => setEditImage(e.target.value)} 
+                  className="flex-1 rounded-md border border-purple-950 bg-[#0c061a] px-3 py-2 text-sm text-white outline-none focus:border-purple-500 cursor-pointer"
+                >
+                  {IMAGENS_DISPONIVEIS.map((img) => (
+                    <option key={img} value={img}>{img}</option>
+                  ))}
+                </select>
+                
+                {/* Preview em tempo real da foto selecionada dentro de public/produtos */}
+                <div className="w-10 h-10 rounded-lg border border-purple-950 bg-[#0c061a] p-1 flex items-center justify-center shrink-0">
+                  <img src={`/produtos/${editImage}`} alt="Preview" className="max-h-full max-w-full object-contain" onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5 sm:col-span-2">
@@ -211,32 +271,17 @@ export default function ListarProdutos() {
               <textarea rows={2} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="rounded-md border border-purple-950 bg-[#0c061a] px-3 py-2 text-sm text-white outline-none focus:border-purple-500 resize-none" />
             </div>
 
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <label className="text-xs font-bold uppercase text-neutral-400">Mudar Ícone Ilustrativo</label>
-              <input type="file" ref={fileInputRef} onChange={(e) => e.target.files && processarImagemEdicao(e.target.files[0])} accept="image/*" className="hidden" />
-              <div
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files) processarImagemEdicao(e.dataTransfer.files[0]); }}
-                onClick={() => fileInputRef.current?.click()}
-                className={`rounded-md border-2 border-dashed p-3 text-center cursor-pointer transition flex items-center justify-between h-[46px] ${isDragging ? "border-purple-400 bg-purple-950/20" : "border-purple-950 bg-[#0c061a]"}`}
-              >
-                <span className="text-xs text-neutral-500">Arraste ou clique para trocar o ícone</span>
-                {editImage && <img src={editImage} alt="Preview" className="w-7 h-7 object-contain rounded bg-[#0a0516] border border-purple-950" />}
-              </div>
-            </div>
-
             <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
               <button type="button" onClick={() => setProdutoEditando(null)} className="px-4 py-2 text-xs font-bold uppercase text-neutral-400 hover:text-white cursor-pointer">Cancelar</button>
-              <button type="submit" disabled={salvandoEdicao} className="rounded bg-purple-600 px-6 py-2 text-xs font-bold uppercase text-white hover:bg-purple-700 cursor-pointer disabled:opacity-50">
-                {salvandoEdicao ? "Salvando..." : "Salvar Alterações"}
+              <button type="submit" className="rounded bg-purple-600 px-6 py-2 text-xs font-bold uppercase text-white hover:bg-purple-700 cursor-pointer">
+                Salvar Alterações
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* TABELA PRINCIPAL DE EXIBIÇÃO */}
+      {/* TABELA PRINCIPAL */}
       <div className="rounded-xl border border-purple-950/40 bg-[#130d24]/20 shadow-xl overflow-hidden">
         {carregando ? (
           <div className="p-12 text-center text-sm text-neutral-400 animate-pulse">Buscando itens na vitrine do Celestium...</div>
@@ -251,6 +296,7 @@ export default function ListarProdutos() {
                   <th className="py-4 px-6">Produto</th>
                   <th className="py-4 px-6">Categoria</th>
                   <th className="py-4 px-6">Tag Promocional</th>
+                  <th className="py-4 px-6">Comando Executável</th>
                   <th className="py-4 px-6">Preço Base</th>
                   <th className="py-4 px-6 text-center">Ações</th>
                 </tr>
@@ -258,6 +304,7 @@ export default function ListarProdutos() {
               <tbody className="divide-y divide-purple-950/30 text-sm">
                 {produtos.map((produto) => {
                   const categoriaNome = categorias.find(c => c.id === produto.categoryId)?.label || "Padrão";
+                  const comandoTextoLimpo = extrairComandoTexto(produto.minecraftCommands);
                   
                   return (
                     <tr key={produto.id} className="transition-colors hover:bg-purple-950/10 group">
@@ -274,7 +321,7 @@ export default function ListarProdutos() {
 
                       <td className="py-4 px-6">
                         <div className="font-bold text-white group-hover:text-purple-300 transition-colors">{produto.name}</div>
-                        <div className="text-xs text-neutral-500 mt-0.5 truncate max-w-[260px]">{produto.description}</div>
+                        <div className="text-xs text-neutral-500 mt-0.5 truncate max-w-[200px]">{produto.description}</div>
                       </td>
 
                       <td className="py-4 px-6">
@@ -293,18 +340,25 @@ export default function ListarProdutos() {
                         )}
                       </td>
 
+                      <td className="py-4 px-6">
+                        {comandoTextoLimpo ? (
+                          <code className="text-xs font-mono bg-purple-950/30 border border-purple-900/20 text-purple-300 px-2 py-1 rounded block max-w-[220px] truncate" title={comandoTextoLimpo}>
+                            {comandoTextoLimpo}
+                          </code>
+                        ) : (
+                          <span className="text-xs text-neutral-600 italic">Nenhum comando</span>
+                        )}
+                      </td>
+
                       <td className="py-4 px-6 font-semibold font-mono text-purple-400">
                         R$ {produto.price.toFixed(2)}
                       </td>
 
-                      {/* ALINHAMENTO LADO A LADO DOS BOTÕES DE AÇÃO */}
                       <td className="py-4 px-6 text-center">
                         <div className="flex items-center justify-center gap-4">
-                          {/* BOTÃO EDITAR */}
                           <button
                             onClick={() => iniciarEdicao(produto)}
                             className="text-neutral-500 hover:text-purple-400 transition-colors p-1.5 rounded-md hover:bg-purple-500/10 cursor-pointer flex items-center gap-1 text-xs font-semibold"
-                            title="Editar Produto"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
@@ -312,11 +366,9 @@ export default function ListarProdutos() {
                             Editar
                           </button>
 
-                          {/* BOTÃO DELETAR ADICIONADO LADO A LADO */}
                           <button
                             onClick={() => handleDeletarProduto(produto.id, produto.name)}
                             className="text-neutral-500 hover:text-red-400 transition-colors p-1.5 rounded-md hover:bg-red-500/10 cursor-pointer flex items-center gap-1 text-xs font-semibold"
-                            title="Excluir Produto"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.34 9m-4.72 0L9 9m1.74-4.75V4.5c0-.212-.03-.418-.084-.612m-2.43.047A24.896 24.896 0 0112.457 3h2.176c.396 0 .783.042 1.157.124M12 7h.01M19.5 7.125V18a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 18V7.125M18 7h-12" />

@@ -1,11 +1,28 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 interface Categoria {
   id: string;
   label: string;
 }
+
+// 📂 LISTA DE FOTOS DA SUA PASTA public/produtos
+const IMAGENS_DISPONIVEIS = [
+  "ChaveComum.png",
+  "ChaveEpica.png",
+  "ChaveLendaria.png",
+  "ChaveRara.png",
+  "Coin1500.png",
+  "Coin3000.png",
+  "Coin4500.png",
+  "Coin7500.png",
+  "Coin15000.png",
+  "Coin25000.png",
+  "VipImperador.png",
+  "VipLord.png",
+  "VipNobre.png",
+];
 
 export default function Produto() {
   // Estados do formulário
@@ -13,18 +30,15 @@ export default function Produto() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [image, setImage] = useState(""); // Começa vazio para o upload obrigatório
+  const [image, setImage] = useState(IMAGENS_DISPONIVEIS[0]); // Começa selecionando a primeira foto
   const [tag, setTag] = useState("");
+  const [command, setCommand] = useState(""); // Mantém a string limpa digitada pelo usuário
 
   // Estados de controle
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [carregandoCategorias, setCarregandoCategorias] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState({ tipo: "", texto: "" });
-  
-  // Estado para controlar o visual do "Arrastar arquivo"
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Carrega as categorias do banco de dados dinamicamente
   async function carregarCategorias() {
@@ -37,6 +51,9 @@ export default function Produto() {
       if (res.ok) {
         const data = await res.json();
         setCategorias(data);
+        if (data.length > 0) {
+          setCategoryId(data[0].id); // Seleciona a primeira categoria por padrão
+        }
       } else {
         setMensagem({ tipo: "erro", texto: "Não foi possível carregar as categorias." });
       }
@@ -52,48 +69,6 @@ export default function Produto() {
     carregarCategorias();
   }, []);
 
-  // Função utilitária para converter arquivo em String Base64
-  const processarArquivoDeImagem = (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      setMensagem({ tipo: "erro", texto: "Por favor, selecione apenas arquivos de imagem (PNG, JPG, WEBP)." });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") {
-        setImage(reader.result); // Define a string Base64 no estado da imagem
-        setMensagem({ tipo: "", texto: "" }); // Limpa erros prévios se houver
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Eventos de Drag & Drop
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processarArquivoDeImagem(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      processarArquivoDeImagem(e.target.files[0]);
-    }
-  };
-
   // Envio do formulário para criar o produto no Backend
   async function handleCriarProduto(e: React.FormEvent) {
     e.preventDefault();
@@ -101,12 +76,20 @@ export default function Produto() {
 
     // Validações básicas antes de enviar
     if (!name.trim() || !description.trim() || !price || !categoryId || !image) {
-      setMensagem({ tipo: "erro", texto: "Por favor, preencha todos os campos obrigatórios e envie um ícone!" });
+      setMensagem({ tipo: "erro", texto: "Por favor, preencha todos os campos obrigatórios!" });
       return;
     }
 
     const token = localStorage.getItem("token");
     setSalvando(true);
+
+    // 💡 FORMATADO PARA O PADRÃO QUE SEU BACKEND/PRISMA ESPERA (ARRAY JSON)
+    const comandoFormatadoJSON = command.trim() !== "" 
+      ? JSON.stringify([command.trim()]) 
+      : JSON.stringify([]);
+
+    // Envia apontando diretamente para o caminho relativo público da sua pasta
+    const caminhoCompletoImagem = `/produtos/${image}`;
 
     try {
       const res = await fetch("http://localhost:3005/products", {
@@ -116,12 +99,15 @@ export default function Produto() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name,
-          description,
-          price: parseFloat(price) || 0,
-          image, // Envia a string Base64 gerada
-          categoryId,
-          tag: tag.trim() !== "" ? tag : null,
+          name: name.trim(),
+          description: description.trim(),
+          price: parseFloat(price),
+          tag: tag.trim() !== "" ? tag.trim() : null,
+          minecraftCommands: comandoFormatadoJSON, // 👈 Agora mapeando para a propriedade certa do Prisma
+          categoryId: categoryId,
+          image: caminhoCompletoImagem, // 👈 Salvando a string limpa /produtos/nome.png
+          available: true,
+          rating: 0.0
         }),
       });
 
@@ -129,16 +115,16 @@ export default function Produto() {
 
       if (res.ok) {
         setMensagem({ tipo: "sucesso", texto: `Produto "${name}" cadastrado com sucesso!` });
-        
+
         // Limpa os campos do formulário pós-cadastro bem-sucedido
         setName("");
         setDescription("");
         setPrice("");
-        setCategoryId("");
-        setImage("");
         setTag("");
+        setCommand("");
+        setImage(IMAGENS_DISPONIVEIS[0]);
       } else {
-        setMensagem({ tipo: "erro", texto: data.message || "Erro ao criar o produto no servidor." });
+        setMensagem({ tipo: "erro", texto: data.error || "Erro ao criar o produto no servidor." });
       }
     } catch (err) {
       console.error(err);
@@ -150,7 +136,7 @@ export default function Produto() {
 
   return (
     <div className="max-w-3xl bg-[#0a0516] text-white p-1 min-h-screen">
-      
+
       {/* CABEÇALHO DA TELA */}
       <div className="mb-6">
         <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-purple-400">
@@ -165,7 +151,7 @@ export default function Produto() {
       {/* FORMULÁRIO COM DESIGN GLASSMORPHISM */}
       <div className="rounded-xl border border-purple-950/40 bg-[#130d24]/40 p-6 md:p-8 shadow-xl">
         <form onSubmit={handleCriarProduto} className="space-y-5">
-          
+
           {/* CAMPO: NOME DO PRODUTO */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-bold uppercase tracking-wide text-neutral-400">Nome do Produto *</label>
@@ -175,6 +161,7 @@ export default function Produto() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: VIP Imperador - 30 Dias"
               className="w-full rounded-md border border-purple-950/60 bg-[#0c061a] px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none transition focus:border-purple-500"
+              required
             />
           </div>
 
@@ -187,8 +174,9 @@ export default function Produto() {
                 onChange={(e) => setCategoryId(e.target.value)}
                 disabled={carregandoCategorias}
                 className="w-full rounded-md border border-purple-950/60 bg-[#0c061a] px-4 py-3 text-sm text-white outline-none transition focus:border-purple-500 cursor-pointer disabled:opacity-50"
+                required
               >
-                <option value="" className="text-neutral-600">
+                <option value="" className="text-neutral-600" disabled>
                   {carregandoCategorias ? "Carregando categorias..." : "Selecione uma categoria"}
                 </option>
                 {categorias.map((cat) => (
@@ -199,48 +187,32 @@ export default function Produto() {
               </select>
             </div>
 
-            {/* NOVO CAMPO: ÁREA DE UPLOAD DRAG AND DROP */}
+            {/* SELETOR DE IMAGEM DA PASTA PUBLIC (RESTAURADO) */}
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold uppercase tracking-wide text-neutral-400">Ícone Ilustrativo *</label>
-              
-              {/* Input escondido nativo */}
-              <input 
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-              />
+              <div className="flex gap-3 items-center">
+                <select
+                  value={image}
+                  onChange={(e) => setImage(e.target.value)}
+                  className="flex-1 rounded-md border border-purple-950/60 bg-[#0c061a] px-4 py-3 text-sm text-white outline-none transition focus:border-purple-500 cursor-pointer"
+                  required
+                >
+                  {IMAGENS_DISPONIVEIS.map((img) => (
+                    <option key={img} value={img} className="bg-[#110a22] text-white">
+                      {img}
+                    </option>
+                  ))}
+                </select>
 
-              {/* Box interativo visual */}
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`w-full rounded-md border-2 border-dashed px-4 py-2.5 text-sm flex items-center justify-between cursor-pointer transition h-[46px] ${
-                  isDragging 
-                    ? "border-purple-400 bg-purple-950/20" 
-                    : image 
-                      ? "border-green-600/50 bg-green-950/5" 
-                      : "border-purple-950/60 bg-[#0c061a] hover:border-purple-800"
-                }`}
-              >
-                <div className="flex items-center gap-2 truncate max-w-[80%]">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 flex-shrink-0 ${image ? "text-green-400" : "text-neutral-500"}`}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                  </svg>
-                  <span className={`truncate text-xs ${image ? "text-green-400 font-medium" : "text-neutral-500"}`}>
-                    {image ? "Imagem Carregada!" : "Arraste ou clique para enviar"}
-                  </span>
+                {/* Box de Preview Visual do arquivo dentro da pasta public/produtos */}
+                <div className="w-[46px] h-[46px] rounded-md border border-purple-950 bg-[#0c061a] p-1.5 flex items-center justify-center shrink-0">
+                  <img 
+                    src={`/produtos/${image}`} 
+                    alt="Preview" 
+                    className="max-h-full max-w-full object-contain" 
+                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} 
+                  />
                 </div>
-
-                {/* Mini Preview se a imagem existir */}
-                {image && (
-                  <div className="w-7 h-7 rounded border border-purple-950 overflow-hidden bg-[#0a0516] flex-shrink-0">
-                    <img src={image} alt="Preview" className="w-full h-full object-contain" />
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -256,12 +228,13 @@ export default function Produto() {
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="0.00"
                 className="w-full rounded-md border border-purple-950/60 bg-[#0c061a] px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none transition focus:border-purple-500"
+                required
               />
             </div>
 
-            {/* CAMPO: TAG PROMOCIONAL */}
+            {/* CAMPO: TAG */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wide text-neutral-400">Tag Opcional)</label>
+              <label className="text-xs font-bold uppercase tracking-wide text-neutral-400">Tag (Opcional)</label>
               <input
                 type="text"
                 value={tag}
@@ -270,6 +243,23 @@ export default function Produto() {
                 className="w-full rounded-md border border-purple-950/60 bg-[#0c061a] px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none transition focus:border-purple-500"
               />
             </div>
+          </div>
+
+          {/* CAMPO: COMANDO DO MINECRAFT */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold uppercase text-neutral-400 tracking-wide">
+              Comando Executável (Minecraft)
+            </label>
+            <input
+              type="text"
+              value={command}
+              onChange={(e) => setCommand(e.target.value)}
+              placeholder="Ex: give {player} diamond 64 ou ppoint give {player} 500"
+              className="w-full rounded-md border border-purple-950/60 bg-[#0c061a] px-4 py-3 text-sm text-purple-300 outline-none transition focus:border-purple-500 font-mono"
+            />
+            <span className="text-[10px] text-neutral-500 italic">
+              Use <code className="text-purple-400 font-bold">{`{player}`}</code> para identificar automaticamente o nick de quem comprou.
+            </span>
           </div>
 
           {/* CAMPO: DESCRIÇÃO DETALHADA */}
@@ -281,16 +271,16 @@ export default function Produto() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Descreva as vantagens, itens incluídos e comandos adicionados por este pacote de forma detalhada..."
               className="w-full rounded-md border border-purple-950/60 bg-[#0c061a] px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none transition focus:border-purple-500 resize-none"
+              required
             />
           </div>
 
           {/* MENSAGENS DE FEEDBACK */}
           {mensagem.texto && (
-            <div className={`text-sm rounded-xl px-4 py-3 border ${
-              mensagem.tipo === "sucesso" 
-                ? "bg-green-500/10 border-green-500/20 text-green-400" 
-                : "bg-red-500/10 border-red-500/20 text-red-400"
-            }`}>
+            <div className={`text-sm rounded-xl px-4 py-3 border ${mensagem.tipo === "sucesso"
+              ? "bg-green-500/10 border-green-500/20 text-green-400"
+              : "bg-red-500/10 border-red-500/20 text-red-400"
+              }`}>
               {mensagem.texto}
             </div>
           )}

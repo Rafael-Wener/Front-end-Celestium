@@ -69,17 +69,13 @@ export default function TabelaDeVendas() {
     return await res.json();
   }
 
-  // Função auxiliar para definir imagem padrão caso não exista no banco
+  // Mapeamento inteligente para o caminho correto salvo pelo seletor
   function obterImagemProduto(produto: Produto) {
     if (produto.image && produto.image.trim() !== "") {
       return produto.image;
     }
-    // Fallback inteligente baseado nas IDs das categorias do seu filtro
-    if (produto.categoryId === "3108208f-74b4-426a-a5c2-ee678fc91a60") return "/itens/vip.png";
-    if (produto.categoryId === "0e226e2b-4f7c-4640-b78a-eeadfd5d26b1") return "/itens/moeda.png";
-    if (produto.categoryId === "8bfc8bf7-d385-4cf4-8617-0913f1cb82c8") return "/itens/chave.png";
-    
-    return "/itens/bau-de-tesouro.png";
+    // Fallback caso algum produto antigo venha sem imagem
+    return "/produtos/vip_iron.png";
   }
 
   // Verifica o login de forma isolada
@@ -117,7 +113,6 @@ export default function TabelaDeVendas() {
     };
 
     try {
-      // Corrigido de 10.200.80.75:3005 para localhost:3005
       const res = await fetch("http://localhost:3005/orders", {
         method: "POST",
         headers: {
@@ -127,22 +122,13 @@ export default function TabelaDeVendas() {
         body: JSON.stringify(pedido),
       });
 
-      console.log("Status:", res.status);
       const resposta = await res.json();
-      console.log("Resposta do servidor:", resposta);
 
       if (!res.ok) throw new Error("Erro ao criar pedido.");
 
-      // 1. Se a sua API já gerar o Pix real, descomente as linhas abaixo para mapear dinamicamente:
-      // if (resposta.pixCopiaCola) setPixCopiaCola(resposta.pixCopiaCola);
-      // if (resposta.pixQrCode) setPixQrCodeUrl(resposta.pixQrCode);
-
-      // 2. Reseta o timer para 1 hora e limpa o carrinho local
       setTempoRestante(3600);
       setCarrinho([]);
       localStorage.removeItem("carrinho");
-
-      // 3. Abre a nova aba lateral de pagamento
       setMostrarAbaPagamento(true);
 
     } catch (err) {
@@ -323,8 +309,7 @@ export default function TabelaDeVendas() {
           <p className="mt-2 max-w-2xl text-sm text-neutral-400">Selecione ranks, moedas, kits e extras.</p>
         </div>
         <div className="flex items-center gap-3 rounded-md border border-purple-950/40 bg-[#130d24]/60 px-4 py-3 text-sm font-bold text-purple-300">
-          <img src="/itens/cesta-de-compras.png" alt="" className="h-5 w-5 invert opacity-70" />
-          {quantidadeItens} item(ns) no carrinho
+          🛒 {quantidadeItens} item(ns) no carrinho
         </div>
       </div>
 
@@ -358,23 +343,25 @@ export default function TabelaDeVendas() {
               key={produto.id}
               className="group overflow-hidden rounded-2xl border border-purple-950/40 bg-[#130d24]/40 shadow-md transition-all duration-300 hover:-translate-y-2 hover:border-purple-500/60 hover:shadow-2xl flex flex-col justify-between"
             >
-              {/* Box da Imagem com o caminho dinâmico mapeado */}
-              <div className="relative flex h-44 items-center justify-center bg-gradient-to-br from-[#2a1148] via-[#5227a5] to-[#8b5cf6]">
-                {produto.tag && (
-                  <span className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-bold text-purple-700 shadow">
-                    {produto.tag}
-                  </span>
-                )}
-                <img
-                  src={obterImagemProduto(produto)}
-                  alt={produto.name}
-                  className="h-24 w-24 object-contain transition duration-300 group-hover:scale-110"
-                />
-              </div>
+{/* 🛠️ BOX DA IMAGEM AMPLIADO - FORÇANDO O ÍCONE A FICAR GRANDE */}
+<div className="relative w-full h-52 flex items-center justify-center bg-[#0c061a]/40 p-2 border-b border-purple-950/40">
+  {produto.tag && (
+    <span className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-bold text-purple-700 shadow z-10">
+      {produto.tag}
+    </span>
+  )}
+  <div className="w-40 h-40 flex items-center justify-center">
+    <img
+      src={obterImagemProduto(produto)}
+      alt={produto.name}
+      className="w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(147,51,234,0.7)] transition duration-300 group-hover:scale-105"
+    />
+  </div>
+</div>
 
               <div className="flex flex-col p-6 flex-1 justify-between">
                 <div>
-                  <h3 className="text-2xl font-black text-white truncate">{produto.name}</h3>
+                  <h3 className="text-xl font-black text-white truncate">{produto.name}</h3>
                   <p className="mt-3 min-h-[60px] text-sm leading-6 text-neutral-400 line-clamp-3">
                     {produto.description}
                   </p>
@@ -384,7 +371,7 @@ export default function TabelaDeVendas() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-xs uppercase tracking-widest text-neutral-500">Preço</span>
-                      <h2 className="text-3xl font-black text-purple-400">R$ {produto.price.toFixed(2)}</h2>
+                      <h2 className="text-2xl font-black text-purple-400">R$ {produto.price.toFixed(2)}</h2>
                     </div>
                     <div className="flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-3 py-1 text-sm font-bold text-amber-400">
                       ⭐ {produto.rating}
@@ -412,7 +399,6 @@ export default function TabelaDeVendas() {
 
           {carrinho.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <img src="/itens/cesta-de-compras.png" className="mb-4 h-10 w-10 invert opacity-40" alt="" />
               <p className="font-bold text-neutral-300">Carrinho vazio</p>
               <span className="mt-2 text-sm text-neutral-500">Adicione produtos para ver aqui</span>
             </div>
