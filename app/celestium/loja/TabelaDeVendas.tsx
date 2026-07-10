@@ -14,7 +14,6 @@ export default function TabelaDeVendas() {
     image: string;
     available: boolean;
     tag: string | null;
-    rating: number;
   };
 
   // Estrutura padronizada para itens dentro do carrinho
@@ -27,7 +26,7 @@ export default function TabelaDeVendas() {
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
-  
+
   // Controle do modal de Login Obrigatório ao finalizar
   const [mostrarModalLogin, setMostrarModalLogin] = useState(false);
 
@@ -82,7 +81,7 @@ export default function TabelaDeVendas() {
   function verificarUsuarioLogado(): boolean {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
-    
+
     if (!token || !userId) {
       setMostrarModalLogin(true);
       return false;
@@ -205,12 +204,12 @@ export default function TabelaDeVendas() {
 
   return (
     <div className="w-full bg-[#0a0516] px-6 py-16 text-white md:px-12 xl:px-40 relative min-h-screen overflow-x-hidden">
-      
+
       {/* ================= ABA/GAVETA LATERAL DE PAGAMENTO (PIX) ================= */}
       {mostrarAbaPagamento && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
           <div className="absolute inset-0" onClick={() => setMostrarAbaPagamento(false)} />
-          
+
           <div className="relative h-full w-full max-w-md bg-[#120b24] border-l border-purple-900/40 p-8 shadow-2xl flex flex-col justify-between z-10 animate-slideLeft">
             <div>
               <div className="flex items-center justify-between border-b border-purple-950/60 pb-5">
@@ -218,7 +217,7 @@ export default function TabelaDeVendas() {
                   <h3 className="text-xl font-black text-white">Pagamento via Pix</h3>
                   <p className="text-xs text-neutral-400 mt-1">Aguardando a confirmação do depósito</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setMostrarAbaPagamento(false)}
                   className="h-10 w-10 border border-purple-950 rounded-lg flex items-center justify-center hover:bg-purple-950/40 cursor-pointer text-neutral-400 font-bold text-sm"
                 >
@@ -250,8 +249,8 @@ export default function TabelaDeVendas() {
               <div className="mt-6">
                 <label className="text-xs font-bold uppercase tracking-wider text-purple-400 block mb-2">Código Copia e Cola</label>
                 <div className="flex gap-2">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     readOnly
                     value={pixCopiaCola}
                     className="w-full bg-[#0a0516] border border-purple-950 rounded-xl px-4 py-3 text-xs focus:outline-none text-neutral-400 select-all truncate"
@@ -324,11 +323,10 @@ export default function TabelaDeVendas() {
           <button
             key={categoria.id}
             onClick={() => setCategoriaSelecionada(categoria.id)}
-            className={`rounded-md border px-4 py-2 text-sm font-bold transition cursor-pointer ${
-              categoriaSelecionada === categoria.id
+            className={`rounded-md border px-4 py-2 text-sm font-bold transition cursor-pointer ${categoriaSelecionada === categoria.id
                 ? "bg-purple-600 text-white border-purple-600"
                 : "border-purple-950/40 bg-[#130d24]/40 text-neutral-300 hover:bg-purple-950/20"
-            }`}
+              }`}
           >
             {categoria.nome}
           </button>
@@ -343,21 +341,21 @@ export default function TabelaDeVendas() {
               key={produto.id}
               className="group overflow-hidden rounded-2xl border border-purple-950/40 bg-[#130d24]/40 shadow-md transition-all duration-300 hover:-translate-y-2 hover:border-purple-500/60 hover:shadow-2xl flex flex-col justify-between"
             >
-{/* 🛠️ BOX DA IMAGEM AMPLIADO - FORÇANDO O ÍCONE A FICAR GRANDE */}
-<div className="relative w-full h-52 flex items-center justify-center bg-[#0c061a]/40 p-2 border-b border-purple-950/40">
-  {produto.tag && (
-    <span className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-bold text-purple-700 shadow z-10">
-      {produto.tag}
-    </span>
-  )}
-  <div className="w-40 h-40 flex items-center justify-center">
-    <img
-      src={obterImagemProduto(produto)}
-      alt={produto.name}
-      className="w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(147,51,234,0.7)] transition duration-300 group-hover:scale-105"
-    />
-  </div>
-</div>
+              {/* 🛠️ BOX DA IMAGEM AMPLIADO - FORÇANDO O ÍCONE A FICAR GRANDE */}
+              <div className="relative w-full h-52 flex items-center justify-center bg-[#0c061a]/40 p-2 border-b border-purple-950/40">
+                {produto.tag && (
+                  <span className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-bold text-purple-700 shadow z-10">
+                    {produto.tag}
+                  </span>
+                )}
+                <div className="w-40 h-40 flex items-center justify-center">
+                  <img
+                    src={obterImagemProduto(produto)}
+                    alt={produto.name}
+                    className="w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(147,51,234,0.7)] transition duration-300 group-hover:scale-105"
+                  />
+                </div>
+              </div>
 
               <div className="flex flex-col p-6 flex-1 justify-between">
                 <div>
@@ -367,17 +365,7 @@ export default function TabelaDeVendas() {
                   </p>
                 </div>
 
-                <div className="mt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs uppercase tracking-widest text-neutral-500">Preço</span>
-                      <h2 className="text-2xl font-black text-purple-400">R$ {produto.price.toFixed(2)}</h2>
-                    </div>
-                    <div className="flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/20 px-3 py-1 text-sm font-bold text-amber-400">
-                      ⭐ {produto.rating}
-                    </div>
-                  </div>
-
+                <div className="mt-4">                  
                   <button
                     onClick={() => adicionarAoCarrinho(produto)}
                     className="mt-6 w-full rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 py-3 font-bold text-white transition hover:scale-[1.02] hover:shadow-lg cursor-pointer text-center"
